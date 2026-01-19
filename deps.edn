@@ -1,7 +1,34 @@
 {:paths ["src" "resources"]
- :deps {org.clojure/clojure {:mvn/version "1.12.4"}}
+ :deps {
+        aero/aero {:mvn/version "1.1.6"}
+        io.pedestal/pedestal.service {:mvn/version "0.6.0"}
+        io.pedestal/pedestal.route   {:mvn/version "0.6.0"}
+        io.pedestal/pedestal.jetty   {:mvn/version "0.6.0"}
+        org.slf4j/slf4j-simple {:mvn/version "2.0.7"}
+        com.stuartsierra/component {:mvn/version "1.1.0"}
+        com.stuartsierra/component.repl {:mvn/version "0.2.0"}
+        metosin/malli {:mvn/version "0.20.0"}
+        buddy/buddy-auth {:mvn/version "3.0.323"}
+        buddy/buddy-sign {:mvn/version "3.6.1-359"}
+        buddy/buddy-hashers {:mvn/version "2.0.167"}
+        clj-http/clj-http {:mvn/version "3.12.3"}
+        prismatic/schema {:mvn/version "1.4.1"}
+        com.github.seancorfield/next.jdbc {:mvn/version "1.3.883"}
+        org.postgresql/postgresql {:mvn/version "42.2.10"}
+        com.zaxxer/HikariCP {:mvn/version "5.0.1"}
+        com.github.seancorfield/honeysql {:mvn/version "2.4.1066"}
+        org.flywaydb/flyway-core {:mvn/version "9.21.2"}
+        org.testcontainers/testcontainers {:mvn/version "1.20.4"}
+        org.testcontainers/postgresql {:mvn/version "1.20.4"}
+        hiccup/hiccup {:mvn/version "2.0.0-RC1"}
+        faker/faker {:mvn/version "0.3.2"}
+        }
  :aliases
  {
+  :dev
+  {:extra-paths ["dev"]
+   :extra-deps  {org.clojure/tools.namespace {:mvn/version "1.5.0"}}
+   }
   :run-m {:main-opts ["-m" "clojure-finance-auth.clojure-finance-auth"]}
   :run-x {:ns-default clojure-finance-auth.clojure-finance-auth
           :exec-fn greet

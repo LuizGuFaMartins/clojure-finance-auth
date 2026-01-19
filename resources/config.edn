@@ -1,0 +1,6 @@
+{:server {:port #long #or [#env SERVER_PORT 8083]}
+ :auth {:private-key-path #or [#env AUTH_PRIVATE_KEY_PATH "keys/private.pem"]
+        :public-key-path #or [#env AUTH_PUBLIC_KEY_PATH  "keys/public.pem"]}
+ :db {
+      :url #or [#env POSTGRES_URL "jdbc:postgresql://localhost:5432/finance_db?user=finance_app_runtime&password=finance_pass"]
+      }}

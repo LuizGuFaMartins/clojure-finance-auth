@@ -4,7 +4,7 @@
 
 (def lib 'net.clojars.clojure-finance-auth/clojure_finance_auth)
 (def version "0.1.0-SNAPSHOT")
-(def main 'clojure-finance-auth.clojure-finance-auth)
+(def main 'clojure-finance-auth.core)
 (def class-dir "target/classes")
 
 (defn test "Run all the tests." [opts]
