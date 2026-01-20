@@ -19,10 +19,10 @@
   (get-in ctx [:components :auth]))
 
 (defn- get-private-key [ctx]
-  (:private-key (get-auth-component ctx)))
+    (get-in (get-auth-component ctx) [:keys :jwt-signature :private-key]))
 
 (defn- get-public-key [ctx]
-  (:public-key (get-auth-component ctx)))
+  (get-in (get-auth-component ctx) [:keys :jwt-signature :public-key]))
 
 (defn- extract-token [ctx]
   (let [auth-header (get-in ctx [:request :headers "authorization"])
@@ -34,7 +34,8 @@
     (or header-token cookie-token)))
 
 (defn create-token [ctx user]
-  (let [priv-key (get-private-key ctx)
+  (let [key-id   :jwt-signature
+        priv-key (get-private-key ctx)
         now      (java.time.Instant/now)
         payload  {:id   (str (:id user))
                   :role (name (:role user))
@@ -43,7 +44,8 @@
                   :aud  "clojure-finance-api"
                   :type "access"
                   :jti  (str (java.util.UUID/randomUUID))}]
-    (jwt/sign payload priv-key {:alg :rs256})))
+    (jwt/sign payload priv-key {:alg :rs256
+                                :header {:kid (name key-id)}})))
 
 (defn verify-token [ctx token]
   (let [pub-key (get-public-key ctx)]

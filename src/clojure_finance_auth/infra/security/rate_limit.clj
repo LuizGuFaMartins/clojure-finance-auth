@@ -8,10 +8,14 @@
   (interceptor
     {:name ::rate-limit
      :enter (fn [ctx]
-              (let [ip (get-in ctx [:request :remote-addr] "unknown")
+              (let [config (get-in ctx [:request :config])
+                    rl-conf (:rate-limit (:server config))
+
+                    window (or (:window-ms rl-conf) 30000)
+                    limit  (or (:requests rl-conf) 100)
+
+                    ip (get-in ctx [:request :remote-addr] "unknown")
                     now (System/currentTimeMillis)
-                    window 30000 ; 30 segundos
-                    limit 100    ; (100 requisições)
 
                     requests (filter #(> % (- now window)) (get @ip-cache ip []))
                     new-requests (conj requests now)]
@@ -19,11 +23,12 @@
                 (swap! ip-cache assoc ip new-requests)
 
                 (if (> (count new-requests) limit)
-                  (-> ctx
-                      (assoc :response {:status 429
-                                        :headers {"Content-Type" "application/json"}
-                                        :body {:error "Too Many Requests"}})
-                      chain/terminate)
-                  ctx
-                ))
-              )}))
+                  (do
+                    (println (str "Rate limit atingido para o IP: " ip))
+                    (-> ctx
+                        (assoc :response {:status 429
+                                          :headers {"Content-Type" "application/json"}
+                                          :body {:error "Too Many Requests"
+                                                 :message (str "Limite de " limit " requisições atingido.")}})
+                        chain/terminate))
+                  ctx)))}))

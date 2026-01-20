@@ -1,12 +1,15 @@
 (ns clojure-finance-auth.infra.http.routes
   (:require [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
-            [clojure-finance-auth.infra.security.rls :as rls]
             [clojure-finance-auth.infra.security.jwt :as jwt]
+            [clojure-finance-auth.infra.security.jwks :as jwks]
             [clojure-finance-auth.infra.interceptors.login-interceptors :as login-i]))
 
 (def raw-routes
   [
+   ;; --- JWKS (Público) ---
+   ["/.well-known/jwks.json" :get [jwks/jwks-interceptor] :route-name :jwks :public true]
+
    ;; --- Login & Public ---
    ["/login" :post [(body-params/body-params) login-i/login] :route-name :action-login :public true]
 
@@ -22,7 +25,6 @@
       (let [[path method interceptors] route
             opts          (apply hash-map (drop 3 route))
             is-public?    (:public opts)
-            rls?          (:rls opts)
             roles         (:roles opts)
             clean-opts    (dissoc opts :public :roles :rls)
             auth-chain
@@ -34,7 +36,6 @@
                 (let [base-chain [jwt/auth-interceptor]]
                   (-> base-chain
                       (cond-> roles (conj (jwt/authorize-roles roles)))
-                      (cond-> rls? (conj rls/rls-interceptor))
                       (into interceptors))))
             ]
 

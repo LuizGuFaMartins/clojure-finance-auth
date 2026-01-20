@@ -8,39 +8,45 @@
     [io.pedestal.http.cors :as cors]))
 
 (defrecord PedestalComponent [config datasource auth]
-           component/Lifecycle
+  component/Lifecycle
 
-    (start [component]
-           (println "Starting PedestalComponent")
-           (let [service-map {::http/router :linear-search
-                              ::http/routes routes
-                              ::http/type :jetty
-                              ::http/join? false
-                              ::http/port (-> config :server :port)
-                              ::http/components {:datasource datasource :auth auth}}
+  (start [component]
+    (println "Starting PedestalComponent")
+    (let [server-conf (:server config)
+          port        (:port server-conf)
+          origins     (or (:allowed-origins server-conf) ["http://localhost:3000"])
 
-                 cors-interceptor (cors/allow-origin {:creds true
-                                                      :allowed-origins ["http://localhost:3000" "http://127.0.0.1:3000"]})
+          service-map {::http/router     :linear-search
+                       ::http/routes     routes
+                       ::http/type       :jetty
+                       ::http/join?      false
+                       ::http/port       port
+                       ::http/components {:datasource datasource
+                                          :auth       auth
+                                          :config     config}}
 
-                 server (-> service-map
-                            http/default-interceptors
-                            (update ::http/interceptors (fn [stack]
-                                                          (into [
-                                                                 cors-interceptor
-                                                                 interceptors/cookies-interceptor
-                                                                 interceptors/content-negotiation-interceptor
-                                                                 rate-limit/rate-limit-interceptor
-                                                                 (interceptors/inject-components component)]
-                                                                stack)))
-                            http/create-server
-                            http/start)]
-             (assoc component :server server)))
+          cors-interceptor (cors/allow-origin {:creds           true
+                                               :allowed-origins origins})
 
-         (stop [component]
-               (println "Stopping PedestalComponent")
-               (when-let [server (:server component)]
-                         (http/stop server))
-               (assoc component :server nil)))
+          server (-> service-map
+                     http/default-interceptors
+                     (update ::http/interceptors
+                             (fn [stack]
+                               (into [cors-interceptor
+                                      interceptors/cookies-interceptor
+                                      interceptors/content-negotiation-interceptor
+                                      rate-limit/rate-limit-interceptor
+                                      (interceptors/inject-components component)]
+                                     stack)))
+                     http/create-server
+                     http/start)]
+      (assoc component :server server)))
+
+  (stop [component]
+    (println "Stopping PedestalComponent")
+    (when-let [server (:server component)]
+      (http/stop server))
+    (assoc component :server nil)))
 
 (defn new-pedestal-component [config]
-      (map->PedestalComponent {:config config}))
+  (map->PedestalComponent {:config config}))

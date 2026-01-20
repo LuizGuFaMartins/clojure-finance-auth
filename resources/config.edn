@@ -1,6 +1,49 @@
-{:server {:port #long #or [#env SERVER_PORT 8083]}
- :auth {:private-key-path #or [#env AUTH_PRIVATE_KEY_PATH "keys/private.pem"]
-        :public-key-path #or [#env AUTH_PUBLIC_KEY_PATH  "keys/public.pem"]}
- :db {
-      :url #or [#env POSTGRES_URL "jdbc:postgresql://localhost:5432/finance_db?user=finance_app_runtime&password=finance_pass"]
-      }}
+#profile {
+    :dev {
+          :server {:port #long #or [#env SERVER_PORT 8083]
+                   :allowed-origins #or [#env ALLOWED_ORIGINS ["http://localhost:3000" "http://127.0.0.1:3000"]]
+                   :rate-limit {:requests #long #or [#env RL_REQUESTS 100]
+                                :window-ms #long #or [#env RL_WINDOW 60000]}}
+          :auth {
+                 :keys-dir #or [#env KEYS_PATH "resources/keys"]
+                 :key-pairs [{:id :jwt-signature :filename "jwt-sign-key"}]
+                 :cookie {:http-only true
+                          :secure    #boolean #or [#env COOKIE_SECURE false]
+                          :same-site #keyword #or [#env COOKIE_SAME_SITE "lax"]
+                          :domain    #or [#env COOKIE_DOMAIN nil]}}
+
+          :db {:url #or [#env POSTGRES_URL "jdbc:postgresql://localhost:5432/finance_db?user=finance_app_runtime&password=finance_pass"]}
+    }
+
+    :homol {
+          :server {:port #long #or [#env SERVER_PORT 8083]
+                   :allowed-origins #or [#env ALLOWED_ORIGINS]
+                   :rate-limit {:requests #long #or [#env RL_REQUESTS 100]
+                                :window-ms #long #or [#env RL_WINDOW 60000]}}
+
+          :auth {:private-key-path #or [#env AUTH_PRIVATE_KEY_PATH "keys/jwt-sign-key.pem"]
+                 :public-key-path #or [#env AUTH_PUBLIC_KEY_PATH  "keys/jwt-sign-key-pub.pem"]
+                 :cookie {:http-only true
+                          :secure    #boolean #or [#env COOKIE_SECURE false]
+                          :same-site #keyword #or [#env COOKIE_SAME_SITE "lax"]
+                          :domain    #or [#env COOKIE_DOMAIN nil]}}
+
+          :db {:url #or [#env POSTGRES_URL]}
+    }
+
+    :prod {
+           :server {:port #long #or [#env SERVER_PORT 8083]
+                    :allowed-origins #or [#env ALLOWED_ORIGINS]
+                    :rate-limit {:requests #long #or [#env RL_REQUESTS 100]
+                                 :window-ms #long #or [#env RL_WINDOW 60000]}}
+
+           :auth {:private-key-path #or [#env AUTH_PRIVATE_KEY_PATH "keys/jwt-sign-key.pem"]
+                  :public-key-path #or [#env AUTH_PUBLIC_KEY_PATH  "keys/jwt-sign-key-pub.pem"]
+                  :cookie {:http-only true
+                           :secure    #boolean #or [#env COOKIE_SECURE false]
+                           :same-site #keyword #or [#env COOKIE_SAME_SITE "lax"]
+                           :domain    #or [#env COOKIE_DOMAIN nil]}}
+
+           :db {:url #or [#env POSTGRES_URL]}
+    }
+  }

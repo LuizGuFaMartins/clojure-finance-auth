@@ -15,12 +15,17 @@
        :invalid-password (response-error 401 "Invalid credentials")
        (response-error 500 "Internal Server Error"))))
 
+(defn- get-cookie-config [ctx]
+  (let [config (get-in ctx [:request :config])]
+    (get-in config [:auth :cookie])))
+
 (def login
   (interceptor
     {:name ::login
      :enter
      (fn [ctx]
-       (let [body (get-in ctx [:request :json-params])]
+       (let [body (get-in ctx [:request :json-params])
+             cookie-conf (get-cookie-config ctx)]
          (if-not (m/validate schemas/LoginSchema body)
            (assoc ctx :response (response-error 400 "Invalid login payload"
                                                 (me/humanize (m/explain schemas/LoginSchema body))))
@@ -31,11 +36,9 @@
                      user-data (dissoc success-data :access-token)
                      resp (response 200 (:user user-data))]
                  (assoc ctx :response
-                            (assoc resp :cookies {"token" {:value     token
-                                                           :http-only true
-                                                           :path      "/"
-                                                           :same-site :lax ;;:strict
-                                                           :secure    false}}))) ;;true
+                            (assoc resp :cookies
+                                        {"token" (merge {:value token :path "/"}
+                                                        cookie-conf)})))
                (assoc ctx :response
                           (if-let [err (:error result)]
                             (error-type-handler result)
@@ -46,14 +49,13 @@
     {:name ::logout
      :enter
      (fn [ctx]
-       (assoc ctx :response
-                  (-> (response 200 {:message "Logout realizado com sucesso"})
-                      (assoc :cookies {"token" {:value     ""
-                                                :http-only true
-                                                :path      "/"
-                                                :max-age   0
-                                                :expires   "Thu, 01 Jan 1970 00:00:00 GMT"
-                                                :secure    false}}))))}))
+       (let [cookie-conf (get-cookie-config ctx)]
+         (assoc ctx :response
+                    (-> (response 200 {:message "Logout realizado com sucesso"})
+                        (assoc :cookies
+                               {"token" (merge {:value "" :path "/" :max-age 0
+                                                :expires "Thu, 01 Jan 1970 00:00:00 GMT"}
+                                               cookie-conf)})))))}))
 
 (def get-current-user
   (interceptor
