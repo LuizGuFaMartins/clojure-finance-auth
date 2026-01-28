@@ -1,39 +1,37 @@
 (ns build
-  (:refer-clojure :exclude [test])
-  (:require [clojure.tools.build.api :as b]))
+  "Used to build projects.
+   To know more, check: https://clojure.org/guides/tools_build"
+  (:require [clojure.java.shell :as shell]
+            [clojure.tools.build.api :as b]))
 
-(def lib 'net.clojars.clojure-finance-auth/clojure_finance_auth)
-(def version "0.1.0-SNAPSHOT")
-(def main 'clojure-finance-auth.core)
-(def class-dir "target/classes")
+(def class-dir
+  "target/classes")
 
-(defn test "Run all the tests." [opts]
-  (let [basis    (b/create-basis {:aliases [:test]})
-        cmds     (b/java-command
-                  {:basis     basis
-                   :main      'clojure.main
-                   :main-args ["-m" "cognitect.test-runner"]})
-        {:keys [exit]} (b/process cmds)]
-    (when-not (zero? exit) (throw (ex-info "Tests failed" {}))))
-  opts)
+(def basis
+  (b/create-basis {:project "deps.edn"}))
 
-(defn- uber-opts [opts]
-  (assoc opts
-         :lib lib :main main
-         :uber-file (format "target/%s-%s.jar" lib version)
-         :basis (b/create-basis {})
-         :class-dir class-dir
-         :src-dirs ["src"]
-         :ns-compile [main]))
+(def uber-file
+  "target/server.jar")
 
-(defn ci "Run the CI pipeline of tests (and build the uberjar)." [opts]
-  (test opts)
-  (b/delete {:path "target"})
-  (let [opts (uber-opts opts)]
-    (println "\nCopying source...")
-    (b/copy-dir {:src-dirs ["resources" "src"] :target-dir class-dir})
-    (println (str "\nCompiling " main "..."))
-    (b/compile-clj opts)
-    (println "\nBuilding JAR..." (:uber-file opts))
-    (b/uber opts))
-  opts)
+(defn clean [_]
+      (b/delete {:path "target"}))
+
+(defn uber [{:keys [entrypoint]}]
+      (clean nil)
+
+      (b/copy-dir {:src-dirs   ["src" "resources"]
+                   :target-dir class-dir})
+
+      (b/compile-clj {:basis     basis
+                      :src-dirs  ["src"]
+                      :class-dir class-dir})
+
+      (b/uber {:class-dir class-dir
+               :uber-file uber-file
+               :basis     basis
+               :main      entrypoint})
+
+      ; config.edn can be overwritten on uber jar packaging.
+      ; we are making sure the config.edn at the uberjar root is the desired one.
+      ; this command will update a file (uf) on a already packaged jar file
+      (shell/sh "jar" "uf" "target/server.jar" "-C" "target/classes" "config.edn"))

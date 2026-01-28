@@ -19,42 +19,61 @@
                         (.encodeToString encoder (.getEncoded (.getPublic kp)))
                         "\n-----END PUBLIC KEY-----"))))
 
-(defn- load-or-generate-pair [keys-dir profile {:keys [id filename]}]
-  (let [base-name (str keys-dir "/" filename)
+(defn- decode-base64-key [b64-str]
+  (when b64-str
+    (.decode (Base64/getDecoder) ^String b64-str)))
+
+(defn- load-from-b64 [id priv-b64 pub-b64]
+  (when (and priv-b64 pub-b64)
+    (println (str "Loading keys from Secret Manager (Base64) for ID: " id))
+    {:id          id
+     :private-key (keys/private-key (decode-base64-key priv-b64))
+     :public-key  (keys/public-key (decode-base64-key pub-b64))}))
+
+(defn- load-from-files [keys-dir id filename]
+  (let [base-name   (str keys-dir "/" filename)
         private-key (io/file (str base-name ".pem"))
         public-key  (io/file (str base-name "-pub.pem"))]
+    (when (and (.exists private-key) (.exists public-key))
+      (println (str "Loading keys from Filesystem for ID: " id))
+      {:id          id
+       :private-key (keys/private-key private-key)
+       :public-key  (keys/public-key public-key)})))
 
-    (cond
-      (and (.exists private-key) (.exists public-key))
-      {:id id :private-key (keys/private-key private-key) :public-key (keys/public-key public-key)}
-
-      (= profile :dev)
-      (do
-        (generate-key-pair! private-key public-key)
-        {:id id :private-key (keys/private-key private-key) :public-key (keys/public-key public-key)})
-
-      :else
-      (throw (ex-info "Keys not found" {:key-id id})))))
+(defn- load-or-generate-pair [keys-dir profile {:keys [id filename private-key-b64 public-key-b64]}]
+  (let [;; Tenta primeiro Secret Manager (Base64)
+        from-sm (load-from-b64 id private-key-b64 public-key-b64)]
+    (or from-sm
+        ;; Se não houver B64, tenta arquivos existentes
+        (load-from-files keys-dir id filename)
+        ;; Se nada existir e for dev, gera
+        (if (= profile :dev)
+          (let [base-name (str keys-dir "/" filename)
+                priv-file (io/file (str base-name ".pem"))
+                pub-file  (io/file (str base-name "-pub.pem"))]
+            (generate-key-pair! priv-file pub-file)
+            {:id id :private-key (keys/private-key priv-file) :public-key (keys/public-key pub-file)})
+          ;; Senão, erro
+          (throw (ex-info "Security keys not found! Provide Base64 environment variables or mount .pem files."
+                          {:key-id id :profile profile}))))))
 
 (defrecord AuthComponent [config]
   component/Lifecycle
   (start [this]
     (println "Starting AuthComponent")
-    (let [auth-conf (:auth config)
-          profile   (:profile config)
-          keys-dir  (:keys-dir auth-conf)
-          pairs-def (:key-pairs auth-conf)
-
+    (let [auth-conf    (:auth config)
+          profile      (:profile config)
+          keys-dir     (:keys-dir auth-conf)
+          pairs-def    (:key-pairs auth-conf)
           loaded-pairs (map #(load-or-generate-pair keys-dir profile %) pairs-def)
-
-          keys-map (reduce (fn [m pair]
-                             (assoc m (:id pair) (dissoc pair :id)))
-                           {}
-                           loaded-pairs)]
-
+          keys-map     (reduce (fn [m pair]
+                                 (assoc m (:id pair) (dissoc pair :id)))
+                               {}
+                               loaded-pairs)]
       (assoc this :keys keys-map)))
 
   (stop [this]
+    (println "Stopping AuthComponent")
     (assoc this :keys nil)))
 
 (defn new-auth-component [config]

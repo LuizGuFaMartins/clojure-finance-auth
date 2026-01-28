@@ -30,3 +30,4 @@
 .idea/
 keys/*
 *.pem
+*.env
