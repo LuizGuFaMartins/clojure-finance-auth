@@ -41,19 +41,15 @@
        :public-key  (keys/public-key public-key)})))
 
 (defn- load-or-generate-pair [keys-dir profile {:keys [id filename private-key-b64 public-key-b64]}]
-  (let [;; Tenta primeiro Secret Manager (Base64)
-        from-sm (load-from-b64 id private-key-b64 public-key-b64)]
+  (let [from-sm (load-from-b64 id private-key-b64 public-key-b64)]
     (or from-sm
-        ;; Se não houver B64, tenta arquivos existentes
         (load-from-files keys-dir id filename)
-        ;; Se nada existir e for dev, gera
         (if (= profile :dev)
           (let [base-name (str keys-dir "/" filename)
                 priv-file (io/file (str base-name ".pem"))
                 pub-file  (io/file (str base-name "-pub.pem"))]
             (generate-key-pair! priv-file pub-file)
             {:id id :private-key (keys/private-key priv-file) :public-key (keys/public-key pub-file)})
-          ;; Senão, erro
           (throw (ex-info "Security keys not found! Provide Base64 environment variables or mount .pem files."
                           {:key-id id :profile profile}))))))
 
