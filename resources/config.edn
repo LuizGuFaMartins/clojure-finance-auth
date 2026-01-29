@@ -1,74 +1,61 @@
-#profile {
-    :dev {
-          :server {:port #long #or [#env SERVER_PORT 8083]
-                   :allowed-origins #or [#env ALLOWED_ORIGINS "http://localhost:3000,http://127.0.0.1:3000"]
-                   :rate-limit {:requests #long #or [#env RL_REQUESTS 100]
-                                :window-ms #long #or [#env RL_WINDOW 60000]}}
-          :auth {
-                 :keys-dir #or [#env KEYS_PATH "resources/keys"]
-                 :key-pairs [{:id :jwt-signature
-                              :filename "jwt-sign-key"
-                              :private-key-b64 #env JWT_SIGN_PRIVATE_KEY_B64
-                              :public-key-b64  #env JWT_SIGN_PUBLIC_KEY_B64}]
-                 :cookie {:http-only true
-                          :secure    #boolean #or [#env COOKIE_SECURE false]
-                          :same-site #keyword #or [#env COOKIE_SAME_SITE "lax"]
-                          :domain    #or [#env COOKIE_DOMAIN nil]}}
+#profile {:dev {:server {:port #long #or [#env SERVER_PORT 8083]
+                         :allowed-origins #or [#env ALLOWED_ORIGINS "http://localhost:3000,http://127.0.0.1:3000"]
+                         :rate-limit {:requests #long #or [#env RL_REQUESTS 100]
+                                      :window-ms #long #or [#env RL_WINDOW 60000]}}
+                :auth {:keys-dir #or [#env KEYS_PATH "resources/keys"]
+                       :key-pairs [{:id :jwt-signature
+                                    :filename "jwt-sign-key"
+                                    :private-key-b64 #env JWT_SIGN_PRIVATE_KEY_B64
+                                    :public-key-b64  #env JWT_SIGN_PUBLIC_KEY_B64}]
+                       :cookie {:http-only true
+                                :secure    #boolean #or [#env COOKIE_SECURE false]
+                                :same-site #keyword #or [#env COOKIE_SAME_SITE "lax"]
+                                :domain    #or [#env COOKIE_DOMAIN nil]}}
 
-          :db {:host     #or [#env POSTGRES_HOST "localhost"]
-               :port     #long #or [#env POSTGRES_PORT 5432]
-               :dbname   #or [#env POSTGRES_DB "finance_db"]
-               :user     #or [#env POSTGRES_USER "finance_app_runtime"]
-               :password #or [#env POSTGRES_PASSWORD "finance_pass"]}
-    }
+                :db {:host     #or [#env POSTGRES_HOST "localhost"]
+                     :port     #long #or [#env POSTGRES_PORT 5432]
+                     :dbname   #or [#env POSTGRES_DB "finance_db"]
+                     :user     #or [#env POSTGRES_USER "finance_app_user"]
+                     :password #or [#env POSTGRES_PASSWORD "finance_pass"]}}
 
-    :homol {
-          :server {:port #long #or [#env SERVER_PORT 8083]
-                   :allowed-origins #or [#env ALLOWED_ORIGINS]
-                   :rate-limit {:requests #long #or [#env RL_REQUESTS 100]
-                                :window-ms #long #or [#env RL_WINDOW 60000]}}
+          :homol {:server {:port #long #or [#env SERVER_PORT 8083]
+                           :allowed-origins #or [#env ALLOWED_ORIGINS]
+                           :rate-limit {:requests #long #or [#env RL_REQUESTS 100]
+                                        :window-ms #long #or [#env RL_WINDOW 60000]}}
 
-            :auth {
-                   :keys-dir #or [#env KEYS_PATH "resources/keys"]
-                   :key-pairs [{:id :jwt-signature
-                                :filename "jwt-sign-key"
-                                :private-key-b64 #env JWT_SIGN_PRIVATE_KEY_B64
-                                :public-key-b64  #env JWT_SIGN_PUBLIC_KEY_B64}]
-                   :cookie {:http-only true
-                            :secure    #boolean #or [#env COOKIE_SECURE false]
-                            :same-site #keyword #or [#env COOKIE_SAME_SITE "lax"]
-                            :domain    #or [#env COOKIE_DOMAIN nil]}}
+                  :auth {:keys-dir #or [#env KEYS_PATH "resources/keys"]
+                         :key-pairs [{:id :jwt-signature
+                                      :filename "jwt-sign-key"
+                                      :private-key-b64 #env JWT_SIGN_PRIVATE_KEY_B64
+                                      :public-key-b64  #env JWT_SIGN_PUBLIC_KEY_B64}]
+                         :cookie {:http-only true
+                                  :secure    #boolean #or [#env COOKIE_SECURE false]
+                                  :same-site #keyword #or [#env COOKIE_SAME_SITE "lax"]
+                                  :domain    #or [#env COOKIE_DOMAIN nil]}}
 
-            :db {:host     #env POSTGRES_HOST
-                 :port     #long #or [#env POSTGRES_PORT 5432]
-                 :dbname   #env POSTGRES_DB
-                 :user     #env POSTGRES_USER
-                 :password #env POSTGRES_PASSWORD
-                 }
-    }
+                  :db {:host     #env POSTGRES_HOST
+                       :port     #long #or [#env POSTGRES_PORT 5432]
+                       :dbname   #env POSTGRES_DB
+                       :user     #env POSTGRES_USER
+                       :password #env POSTGRES_PASSWORD}}
 
-    :prod {
-           :server {:port #long #or [#env SERVER_PORT 8083]
-                    :allowed-origins #or [#env ALLOWED_ORIGINS]
-                    :rate-limit {:requests #long #or [#env RL_REQUESTS 100]
-                                 :window-ms #long #or [#env RL_WINDOW 60000]}}
+          :prod {:server {:port #long #or [#env SERVER_PORT 8083]
+                          :allowed-origins #or [#env ALLOWED_ORIGINS]
+                          :rate-limit {:requests #long #or [#env RL_REQUESTS 100]
+                                       :window-ms #long #or [#env RL_WINDOW 60000]}}
 
-           :auth {
-                  :keys-dir #or [#env KEYS_PATH "resources/keys"]
-                  :key-pairs [{:id :jwt-signature
-                               :filename "jwt-sign-key"
-                               :private-key-b64 #env JWT_SIGN_PRIVATE_KEY_B64
-                               :public-key-b64  #env JWT_SIGN_PUBLIC_KEY_B64}]
-                  :cookie {:http-only true
-                           :secure    #boolean #or [#env COOKIE_SECURE false]
-                           :same-site #keyword #or [#env COOKIE_SAME_SITE "lax"]
-                           :domain    #or [#env COOKIE_DOMAIN nil]}}
+                 :auth {:keys-dir #or [#env KEYS_PATH "resources/keys"]
+                        :key-pairs [{:id :jwt-signature
+                                     :filename "jwt-sign-key"
+                                     :private-key-b64 #env JWT_SIGN_PRIVATE_KEY_B64
+                                     :public-key-b64  #env JWT_SIGN_PUBLIC_KEY_B64}]
+                        :cookie {:http-only true
+                                 :secure    #boolean #or [#env COOKIE_SECURE false]
+                                 :same-site #keyword #or [#env COOKIE_SAME_SITE "lax"]
+                                 :domain    #or [#env COOKIE_DOMAIN nil]}}
 
-           :db {:host     #env POSTGRES_HOST
-                :port     #long #or [#env POSTGRES_PORT 5432]
-                :dbname   #env POSTGRES_DB
-                :user     #env POSTGRES_USER
-                :password #env POSTGRES_PASSWORD
-                }
-    }
-  }
+                 :db {:host     #env POSTGRES_HOST
+                      :port     #long #or [#env POSTGRES_PORT 5432]
+                      :dbname   #env POSTGRES_DB
+                      :user     #env POSTGRES_USER
+                      :password #env POSTGRES_PASSWORD}}}

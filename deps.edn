@@ -1,6 +1,5 @@
 {:paths ["src" "resources"]
- :deps {
-        aero/aero {:mvn/version "1.1.6"}
+ :deps {aero/aero {:mvn/version "1.1.6"}
         io.pedestal/pedestal.service {:mvn/version "0.6.0"}
         io.pedestal/pedestal.route   {:mvn/version "0.6.0"}
         io.pedestal/pedestal.jetty   {:mvn/version "0.6.0"}
@@ -21,15 +20,12 @@
         org.testcontainers/testcontainers {:mvn/version "1.20.4"}
         org.testcontainers/postgresql {:mvn/version "1.20.4"}
         hiccup/hiccup {:mvn/version "2.0.0-RC1"}
-        faker/faker {:mvn/version "0.3.2"}
-        }
+        faker/faker {:mvn/version "0.3.2"}}
  :aliases
- {
-  :dev
+ {:dev
   {:extra-paths ["dev"]
-   :extra-deps  {org.clojure/tools.namespace {:mvn/version "1.5.0"}}
-   }
-  :run-m {:main-opts ["-m" "clojure-finance-auth.clojure-finance-auth"]}
+   :extra-deps  {org.clojure/tools.namespace {:mvn/version "1.5.0"}}}
+  :run-m {:main-opts ["-m" "clojure-finance-auth.core"]}
   :run-x {:ns-default clojure-finance-auth.clojure-finance-auth
           :exec-fn greet
           :exec-args {:name "Clojure"}}
